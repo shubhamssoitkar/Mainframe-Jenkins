@@ -16,7 +16,7 @@ pipeline {
         stage('Verify Profiles') {
             steps {
                 // Lists all zosmf profiles Jenkins can see
-                bat 'zowe config list profiles zosmf'
+                bat 'zowe config list profiles'
             }
         }
 
