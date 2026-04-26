@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        COBOL_DIR = "coboldb2"
-        JCL_DIR   = "jcl"
+        COBOL_DIR = "src/coboldb2"
+        JCL_DIR   = "src/jcl"
         HOST      = "204.90.115.200"
         PORT      = "10443"
     }
