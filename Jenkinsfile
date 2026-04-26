@@ -8,12 +8,9 @@ pipeline {
             }
         }
 
-        stage('Submit Test JCL') {
+        stage('Submit Run JCL') {
             steps {
-                bat '''
-                zowe zos-jobs submit local-file src\\jcl\\compile.jcl --zosmf-profile zosmf --rfj > result.json
-                type result.json
-                '''
+                bat 'zowe zos-jobs submit local-file src\\jcl\\runjcl.jcl --zosmf-profile zosmf --rfj'
             }
         }
     }
