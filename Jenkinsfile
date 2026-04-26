@@ -19,7 +19,7 @@ pipeline {
                                                  passwordVariable: 'ZOSMF_PASS')]) {
                     bat """
                     zowe zos-jobs submit data-set %JCL_DATASET% ^
-                        --host your.zosmf.host --port 443 ^
+                        --host 204.90.115.200 --port 10443 ^
                         --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
                         --reject-unauthorized false ^
                         --view-all-spool-content
