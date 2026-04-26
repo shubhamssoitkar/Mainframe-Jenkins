@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        SRC_DIR = "coboldb2"
-        JCL_DIR = "jcl"
+        SRC_DIR = "src/coboldb2"   // COBOL source folder
+        JCL_DIR = "src/jcl"        // JCL folder
         ZOSMF_PROFILE = "zosmf"
     }
 
@@ -18,8 +18,13 @@ pipeline {
             steps {
                 script {
                     def files = findFiles(glob: "${SRC_DIR}/*.cbl")
-                    env.PROGRAMS = files.collect { it.name.replace('.cbl','') }.join(',')
-                    echo "Discovered COBOL-DB2 programs: ${env.PROGRAMS}"
+                    if (files.size() > 0) {
+                        env.PROGRAMS = files.collect { it.name.replace('.cbl','') }.join(',')
+                        echo "Discovered COBOL-DB2 programs: ${env.PROGRAMS}"
+                    } else {
+                        echo "No COBOL programs found in ${SRC_DIR}"
+                        env.PROGRAMS = ""
+                    }
                 }
             }
         }
@@ -32,29 +37,35 @@ pipeline {
                         for (p in programs) {
                             echo ">>> Processing program: ${p}"
 
-                            // Compile
                             def compileResult = submitJobSync(
                                 file: "${JCL_DIR}/compile.jcl",
                                 zosmfProfile: "${ZOSMF_PROFILE}"
                             )
-                            echo "Compile job for ${p} finished: ID=${compileResult.jobId}, RC=${compileResult.retCode}"
+                            echo "Compile job for ${p}: ID=${compileResult.jobId}, RC=${compileResult.retCode}"
+                            if (compileResult.retCode.toInteger() > 4) {
+                                error "Compile failed for ${p} with RC=${compileResult.retCode}"
+                            }
 
-                            // Bind
                             def bindResult = submitJobSync(
                                 file: "${JCL_DIR}/bind.jcl",
                                 zosmfProfile: "${ZOSMF_PROFILE}"
                             )
-                            echo "Bind job for ${p} finished: ID=${bindResult.jobId}, RC=${bindResult.retCode}"
+                            echo "Bind job for ${p}: ID=${bindResult.jobId}, RC=${bindResult.retCode}"
+                            if (bindResult.retCode.toInteger() > 4) {
+                                error "Bind failed for ${p} with RC=${bindResult.retCode}"
+                            }
 
-                            // Run
                             def runResult = submitJobSync(
                                 file: "${JCL_DIR}/run.jcl",
                                 zosmfProfile: "${ZOSMF_PROFILE}"
                             )
-                            echo "Run job for ${p} finished: ID=${runResult.jobId}, RC=${runResult.retCode}"
+                            echo "Run job for ${p}: ID=${runResult.jobId}, RC=${runResult.retCode}"
+                            if (runResult.retCode.toInteger() > 4) {
+                                error "Run failed for ${p} with RC=${runResult.retCode}"
+                            }
                         }
                     } else {
-                        echo "No COBOL programs found in ${SRC_DIR}"
+                        echo "Skipping build/run — no COBOL programs discovered."
                     }
                 }
             }
@@ -63,7 +74,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: '*.jcl', fingerprint: true
+            archiveArtifacts artifacts: 'src/jcl/*.jcl', fingerprint: true
         }
     }
 }
