@@ -2,15 +2,18 @@ pipeline {
     agent any
 
     stages {
-        stage('Test Zowe Job') {
+        stage('Check Zowe CLI') {
             steps {
-                script {
-                    def result = submitJobSync(
-                        file: "src/jcl/compile.jcl",
-                        zosmfProfile: "zosmf"
-                    )
-                    echo "Job submitted: ID=${result.jobId}, RC=${result.retCode}"
-                }
+                bat 'zowe --version'
+            }
+        }
+
+        stage('Submit Test JCL') {
+            steps {
+                bat '''
+                zowe zos-jobs submit local-file src\\jcl\\compile.jcl --zosmf-profile zosmf --rfj > result.json
+                type result.json
+                '''
             }
         }
     }
