@@ -1,82 +1,93 @@
 pipeline {
-        agent any
+    agent any
 
-        environment {
-            COBOL_DIR = "src/coboldb2"
-            JCL_DIR   = "src/jcl"
-            HOST      = "204.90.115.200"
-            PORT      = "10443"
+    environment {
+        COBOL_DIR = "src/coboldb2"
+        JCL_DIR   = "src/jcl"
+        HOST      = "204.90.115.200"
+        PORT      = "10443"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
         }
 
-        stages {
-            stage('Checkout') {
-                steps {
-                    checkout scm
-                }
-            }
-
-            stage('Compile Programs') {
-                steps {
-                    withCredentials([usernamePassword(credentialsId: 'zosmf-credentials',
-                                                     usernameVariable: 'ZOSMF_USER',
-                                                     passwordVariable: 'ZOSMF_PASS')]) {
-                        script {
-                            def cobolFiles = findFiles(glob: "${COBOL_DIR}/*.cbl")
-                            cobolFiles.each { file ->
-                                def pgmName = file.name.replace(".cbl","")
-                                echo "Submitting compile JCL for ${pgmName}"
-                                bat """
-                                zowe zos-jobs submit local-file ${JCL_DIR}/COMPDB2.jcl ^
-                                    --host %HOST% --port %PORT% ^
-                                    --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
-                                    --reject-unauthorized false --view-all-spool-content
-                                """
-                            }
+        stage('Compile Programs') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'zosmf-credentials',
+                                                 usernameVariable: 'ZOSMF_USER',
+                                                 passwordVariable: 'ZOSMF_PASS')]) {
+                    script {
+                        def cobolFiles = findFiles(glob: "${COBOL_DIR}/*.cbl")
+                        cobolFiles.each { file ->
+                            def pgmName = file.name.replace(".cbl","")
+                            echo "Submitting compile JCL for ${pgmName}"
+                            bat """
+                            powershell -Command "(Get-Content ${JCL_DIR}/COMPDB2.jcl) -replace '&PGMNAME', '${pgmName}' | Set-Content ${JCL_DIR}/COMPDB2_${pgmName}.jcl"
+                            zowe zos-jobs submit local-file ${JCL_DIR}/COMPDB2_${pgmName}.jcl ^
+                                --host %HOST% --port %PORT% ^
+                                --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
+                                --reject-unauthorized false --view-all-spool-content
+                            """
                         }
                     }
                 }
             }
+        }
 
-  stage('Bind Programs') {
-      steps {
-          withCredentials([usernamePassword(credentialsId: 'zosmf-credentials',
-                                           usernameVariable: 'ZOSMF_USER',
-                                           passwordVariable: 'ZOSMF_PASS')]) {
-              script {
-                  def cobolFiles = findFiles(glob: "${COBOL_DIR}/*.cbl")
-                  cobolFiles.each { file ->
-                      def pgmName = file.name.replace(".cbl","")
-                      echo "Submitting bind JCL for ${pgmName}"
-                      bat """
-                      zowe zos-jobs submit local-file ${JCL_DIR}/BINDDB2.jcl ^
-                          --host %HOST% --port %PORT% ^
-                          --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
-                          --reject-unauthorized false --view-all-spool-content
-                      """
-                  }
-              }
-          }
-      }
-  }
+        stage('Bind Programs') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'zosmf-credentials',
+                                                 usernameVariable: 'ZOSMF_USER',
+                                                 passwordVariable: 'ZOSMF_PASS')]) {
+                    script {
+                        def cobolFiles = findFiles(glob: "${COBOL_DIR}/*.cbl")
+                        cobolFiles.each { file ->
+                            def pgmName = file.name.replace(".cbl","")
+                            echo "Submitting bind JCL for ${pgmName}"
+                            bat """
+                            powershell -Command "(Get-Content ${JCL_DIR}/DB2BIND.jcl) -replace '&PGMNAME', '${pgmName}' | Set-Content ${JCL_DIR}/DB2BIND_${pgmName}.jcl"
+                            zowe zos-jobs submit local-file ${JCL_DIR}/DB2BIND_${pgmName}.jcl ^
+                                --host %HOST% --port %PORT% ^
+                                --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
+                                --reject-unauthorized false --view-all-spool-content
+                            """
+                        }
+                    }
+                }
+            }
+        }
 
-  stage('Run Programs') {
-      steps {
-          withCredentials([usernamePassword(credentialsId: 'zosmf-credentials',
-                                           usernameVariable: 'ZOSMF_USER',
-                                           passwordVariable: 'ZOSMF_PASS')]) {
-              script {
-                  def cobolFiles = findFiles(glob: "${COBOL_DIR}/*.cbl")
-                  cobolFiles.each { file ->
-                      def pgmName = file.name.replace(".cbl","")
-                      echo "Submitting run JCL for ${pgmName}"
-                      bat """
-                      zowe zos-jobs submit local-file ${JCL_DIR}/RUNJCL.jcl ^
-                          --host %HOST% --port %PORT% ^
-                          --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
-                          --reject-unauthorized false --view-all-spool-content
-                      """
-                  }
-              }
-          }
-      }
-  }
+        stage('Run Programs') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'zosmf-credentials',
+                                                 usernameVariable: 'ZOSMF_USER',
+                                                 passwordVariable: 'ZOSMF_PASS')]) {
+                    script {
+                        def cobolFiles = findFiles(glob: "${COBOL_DIR}/*.cbl")
+                        cobolFiles.each { file ->
+                            def pgmName = file.name.replace(".cbl","")
+                            echo "Submitting run JCL for ${pgmName}"
+                            bat """
+                            powershell -Command "(Get-Content ${JCL_DIR}/DB2RUN.jcl) -replace '&PGMNAME', '${pgmName}' | Set-Content ${JCL_DIR}/DB2RUN_${pgmName}.jcl"
+                            zowe zos-jobs submit local-file ${JCL_DIR}/DB2RUN_${pgmName}.jcl ^
+                                --host %HOST% --port %PORT% ^
+                                --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
+                                --reject-unauthorized false --view-all-spool-content
+                            """
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo "Pipeline failed — notify team here (email/Slack integration can be added)."
+        }
+    }
+}
