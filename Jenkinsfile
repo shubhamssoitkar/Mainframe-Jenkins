@@ -15,7 +15,7 @@ pipeline {
 
         stage('Submit Run JCL') {
             steps {
-                bat "zowe zos-jobs submit local-file %JCL_DIR%\\runjcl.jcl --zosmf-profile %ZOSMF_PROFILE% --rfj"
+                bat "zowe zos-jobs submit data-set "Z10791.COBDB2.JCL(DB2RUN)" --view-all-spool-content"
             }
         }
     }
