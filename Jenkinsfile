@@ -23,9 +23,10 @@ pipeline {
                     script {
                         def cobolFiles = findFiles(glob: "${COBOL_DIR}/*.cbl")
                         cobolFiles.each { file ->
-                            echo "Submitting compile JCL for ${file.name}"
+                            def pgmName = file.name.replace(".cbl","")
+                            echo "Submitting compile JCL for ${pgmName}"
                             bat """
-                            zowe zos-jobs submit local-file ${JCL_DIR}/compile.jcl ^
+                            zowe zos-jobs submit local-file ${JCL_DIR}/COMPDB2.jcl ^
                                 --host %HOST% --port %PORT% ^
                                 --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
                                 --reject-unauthorized false --view-all-spool-content
@@ -42,7 +43,7 @@ pipeline {
                                                  usernameVariable: 'ZOSMF_USER',
                                                  passwordVariable: 'ZOSMF_PASS')]) {
                     bat """
-                    zowe zos-jobs submit local-file ${JCL_DIR}/bind.jcl ^
+                    zowe zos-jobs submit local-file ${JCL_DIR}/BINDDB2.jcl ^
                         --host %HOST% --port %PORT% ^
                         --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
                         --reject-unauthorized false --view-all-spool-content
@@ -57,7 +58,7 @@ pipeline {
                                                  usernameVariable: 'ZOSMF_USER',
                                                  passwordVariable: 'ZOSMF_PASS')]) {
                     bat """
-                    zowe zos-jobs submit local-file ${JCL_DIR}/run.jcl ^
+                    zowe zos-jobs submit local-file ${JCL_DIR}/RUNJCL.jcl ^
                         --host %HOST% --port %PORT% ^
                         --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
                         --reject-unauthorized false --view-all-spool-content
