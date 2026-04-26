@@ -27,6 +27,7 @@ pipeline {
                             echo "Submitting compile JCL for ${pgmName}"
                             bat """
                             zowe zos-jobs submit local-file ${JCL_DIR}/COMPDB2.jcl ^
+                                --vasc "DB2PGM=${pgmName}" ^
                                 --host %HOST% --port %PORT% ^
                                 --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
                                 --reject-unauthorized false --view-all-spool-content
@@ -42,12 +43,20 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'zosmf-credentials',
                                                  usernameVariable: 'ZOSMF_USER',
                                                  passwordVariable: 'ZOSMF_PASS')]) {
-                    bat """
-                    zowe zos-jobs submit local-file ${JCL_DIR}/BINDDB2.jcl ^
-                        --host %HOST% --port %PORT% ^
-                        --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
-                        --reject-unauthorized false --view-all-spool-content
-                    """
+                    script {
+                        def cobolFiles = findFiles(glob: "${COBOL_DIR}/*.cbl")
+                        cobolFiles.each { file ->
+                            def pgmName = file.name.replace(".cbl","")
+                            echo "Submitting bind JCL for ${pgmName}"
+                            bat """
+                            zowe zos-jobs submit local-file ${JCL_DIR}/BINDDB2.jcl ^
+                                --vasc "DB2PGM=${pgmName}" ^
+                                --host %HOST% --port %PORT% ^
+                                --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
+                                --reject-unauthorized false --view-all-spool-content
+                            """
+                        }
+                    }
                 }
             }
         }
@@ -57,12 +66,20 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'zosmf-credentials',
                                                  usernameVariable: 'ZOSMF_USER',
                                                  passwordVariable: 'ZOSMF_PASS')]) {
-                    bat """
-                    zowe zos-jobs submit local-file ${JCL_DIR}/RUNJCL.jcl ^
-                        --host %HOST% --port %PORT% ^
-                        --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
-                        --reject-unauthorized false --view-all-spool-content
-                    """
+                    script {
+                        def cobolFiles = findFiles(glob: "${COBOL_DIR}/*.cbl")
+                        cobolFiles.each { file ->
+                            def pgmName = file.name.replace(".cbl","")
+                            echo "Submitting run JCL for ${pgmName}"
+                            bat """
+                            zowe zos-jobs submit local-file ${JCL_DIR}/RUNJCL.jcl ^
+                                --vasc "DB2PGM=${pgmName}" ^
+                                --host %HOST% --port %PORT% ^
+                                --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
+                                --reject-unauthorized false --view-all-spool-content
+                            """
+                        }
+                    }
                 }
             }
         }
