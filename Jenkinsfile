@@ -55,7 +55,7 @@ pipeline {
                                 --host %HOST% --port %PORT% ^
                                 --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
                                 --reject-unauthorized false --view-all-spool-content
-                            del ${JCL_DIR}\\DB2BIND_${pgmName}.jcl
+                            del ${JCL_DIR}\\BINDDB2_${pgmName}.jcl
                             """
                         }
                     }
@@ -79,7 +79,7 @@ pipeline {
                                 --host %HOST% --port %PORT% ^
                                 --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
                                 --reject-unauthorized false --view-all-spool-content
-                            del ${JCL_DIR}\\DB2RUN_${pgmName}.jcl
+                            del ${JCL_DIR}\\RUNJCL_${pgmName}.jcl
                             """
                         }
                     }
