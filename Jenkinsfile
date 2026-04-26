@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        SRC_DIR = "src/coboldb2"
-        JCL_DIR = "src/jcl"
-        HOST    = "204.90.115.200"
-        PORT    = "10443"
+        COBOL_DIR = "coboldb2"
+        JCL_DIR   = "jcl"
+        HOST      = "204.90.115.200"
+        PORT      = "10443"
     }
 
     stages {
@@ -21,7 +21,7 @@ pipeline {
                                                  usernameVariable: 'ZOSMF_USER',
                                                  passwordVariable: 'ZOSMF_PASS')]) {
                     script {
-                        def cobolFiles = findFiles(glob: "${SRC_DIR}/*.cbl")
+                        def cobolFiles = findFiles(glob: "${COBOL_DIR}/*.cbl")
                         cobolFiles.each { file ->
                             echo "Submitting compile JCL for ${file.name}"
                             bat """
