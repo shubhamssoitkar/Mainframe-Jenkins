@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        JCL_DIR = "jcl"
+        ZOSMF_PROFILE = "zosmf"
+    }
+
     stages {
         stage('Check Zowe CLI') {
             steps {
@@ -10,14 +15,7 @@ pipeline {
 
         stage('Submit Run JCL') {
             steps {
-                bat 'zowe zos-jobs submit local-file src\\jcl\\runjcl.jcl --zosmf-profile zosmf'
-            }
-        }
-
-        stage('Check Job Status') {
-            steps {
-                // Replace JOB12345 with your actual job ID
-                bat 'zowe zos-jobs view job-status-by-jobid JOB12345 --zosmf-profile zosmf'
+                bat "zowe zos-jobs submit local-file %JCL_DIR%\\runjcl.jcl --zosmf-profile %ZOSMF_PROFILE% --rfj"
             }
         }
     }
