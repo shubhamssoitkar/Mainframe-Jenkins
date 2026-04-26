@@ -15,7 +15,15 @@ pipeline {
 
         stage('Submit Run JCL') {
             steps {
-                bat "zowe zos-jobs submit data-set %JCL_DATASET% --zosmf-profile %ZOSMF_PROFILE% --view-all-spool-content"
+                withCredentials([usernamePassword(credentialsId: 'zosmf-credentials',
+                                                 usernameVariable: 'ZOSMF_USER',
+                                                 passwordVariable: 'ZOSMF_PASS')]) {
+                    bat """
+                    zowe zos-jobs submit data-set %JCL_DATASET% ^
+                        --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
+                        --zosmf-profile %ZOSMF_PROFILE% --view-all-spool-content
+                    """
+                }
             }
         }
     }
