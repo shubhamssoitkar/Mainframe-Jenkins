@@ -1,10 +1,9 @@
 pipeline {
-agent any
+    agent any
 
     environment {
-        SRC_DIR = "coboldb2"
         JCL_DIR = "jcl"
-        ZOSMF_PROFILE = "zosmf"   // confirmed profile name
+        ZOSMF_PROFILE = "zosmf"
     }
 
     stages {
@@ -14,44 +13,41 @@ agent any
             }
         }
 
-        stage('Discover COBOL Programs') {
+        stage('Compile Program') {
             steps {
                 script {
-                    def files = findFiles(glob: "${SRC_DIR}/*.cbl")
-                    env.PROGRAMS = files.collect { it.name.replace('.cbl','') }.join(',')
-                    echo "Discovered COBOL-DB2 programs: ${env.PROGRAMS}"
+                    def response = zoweSubmitJob(
+                        file: "${JCL_DIR}/compile.jcl",
+                        zosmfProfile: "${ZOSMF_PROFILE}"
+                    )
+                    echo "Compile job submitted: ${response.jobId}"
+                    zoweViewJobOutput(jobId: response.jobId, zosmfProfile: "${ZOSMF_PROFILE}")
                 }
             }
         }
 
-        stage('Build and Run Programs') {
+        stage('Bind Program') {
             steps {
                 script {
-                    def programs = env.PROGRAMS.split(',')
-                    for (p in programs) {
-                        echo ">>> Building and running program: ${p}"
+                    def response = zoweSubmitJob(
+                        file: "${JCL_DIR}/bind.jcl",
+                        zosmfProfile: "${ZOSMF_PROFILE}"
+                    )
+                    echo "Bind job submitted: ${response.jobId}"
+                    zoweViewJobOutput(jobId: response.jobId, zosmfProfile: "${ZOSMF_PROFILE}")
+                }
+            }
+        }
 
-                        // Compile
-                        bat """
-                        zowe zos-jobs submit local-file %JCL_DIR%\\compile.jcl --rfj --variable DB2PGM=${p} --zosmf-profile %ZOSMF_PROFILE% > compile_${p}.json
-                        for /f "tokens=2 delims=:," %%i in ('findstr JOBID compile_${p}.json') do set JOBID=%%i
-                        zowe zos-jobs view job-output-by-jobid %JOBID% --zosmf-profile %ZOSMF_PROFILE%
-                        """
-
-                        // Bind
-                        bat """
-                        zowe zos-jobs submit local-file %JCL_DIR%\\bind.jcl --rfj --variable DB2PGM=${p} --zosmf-profile %ZOSMF_PROFILE% > bind_${p}.json
-                        for /f "tokens=2 delims=:," %%i in ('findstr JOBID bind_${p}.json') do set JOBID=%%i
-                        zowe zos-jobs view job-output-by-jobid %JOBID% --zosmf-profile %ZOSMF_PROFILE%
-                        """
-
-                        // Run
-                        bat """
-                        zowe zos-jobs submit local-file %JCL_DIR%\\run.jcl --rfj --variable DB2PGM=${p} --zosmf-profile %ZOSMF_PROFILE% > run_${p}.json
-                        for /f "tokens=2 delims=:," %%i in ('findstr JOBID run_${p}.json') do set JOBID=%%i
-                        zowe zos-jobs view job-output-by-jobid %JOBID% --zosmf-profile %ZOSMF_PROFILE%
-                        """
-                    }
+        stage('Run Program') {
+            steps {
+                script {
+                    def response = zoweSubmitJob(
+                        file: "${JCL_DIR}/run.jcl",
+                        zosmfProfile: "${ZOSMF_PROFILE}"
+                    )
+                    echo "Run job submitted: ${response.jobId}"
+                    zoweViewJobOutput(jobId: response.jobId, zosmfProfile: "${ZOSMF_PROFILE}")
                 }
             }
         }
@@ -59,7 +55,7 @@ agent any
 
     post {
         always {
-            archiveArtifacts artifacts: '*.json', fingerprint: true
+            archiveArtifacts artifacts: '*.jcl', fingerprint: true
         }
     }
 }
