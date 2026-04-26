@@ -84,4 +84,10 @@ pipeline {
             }
         }
     }
+
+    post {
+        failure {
+            echo "Pipeline failed — notify team here (email/Slack integration can be added)."
+        }
+    }
 }
