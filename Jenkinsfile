@@ -15,7 +15,7 @@ pipeline {
 
         stage('Verify Profiles') {
             steps {
-                // Lists all zosmf profiles Jenkins can see
+                // Correct syntax for Zowe CLI v3
                 bat 'zowe config list profiles'
             }
         }
@@ -28,7 +28,9 @@ pipeline {
                     bat """
                     zowe zos-jobs submit data-set %JCL_DATASET% ^
                         --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
-                        --zosmf-profile %ZOSMF_PROFILE% --view-all-spool-content
+                        --host your.zosmf.host --port 443 ^
+                        --reject-unauthorized false ^
+                        --view-all-spool-content
                     """
                 }
             }
