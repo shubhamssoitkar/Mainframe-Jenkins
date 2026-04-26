@@ -2,29 +2,53 @@ pipeline {
     agent any
 
     environment {
-        JCL_DATASET = "Z10791.COBDB2.JCL(DB2RUN)"
+        SRC_DIR = "src/coboldb2"
+        JCL_DIR = "src/jcl"
     }
 
     stages {
-        stage('Check Zowe CLI') {
+        stage('Checkout') {
             steps {
-                bat 'zowe --version'
+                checkout scm
             }
         }
 
-        stage('Submit Run JCL') {
+        stage('Compile Programs') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'zosmf-credentials',
-                                                 usernameVariable: 'ZOSMF_USER',
-                                                 passwordVariable: 'ZOSMF_PASS')]) {
-                    bat """
-                    zowe zos-jobs submit data-set %JCL_DATASET% ^
-                        --host 204.90.115.200 --port 10443 ^
-                        --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
-                        --reject-unauthorized false ^
-                        --view-all-spool-content
-                    """
+                script {
+                    def cobolFiles = findFiles(glob: "${SRC_DIR}/*.cbl")
+                    cobolFiles.each { file ->
+                        echo "Submitting compile JCL for ${file.name}"
+                        bat """
+                        zowe zos-jobs submit local-file ${JCL_DIR}/compile.jcl ^
+                            --host 204.90.115.200 --port 10443 ^
+                            --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
+                            --reject-unauthorized false --view-all-spool-content
+                        """
+                    }
                 }
+            }
+        }
+
+        stage('Bind Programs') {
+            steps {
+                bat """
+                zowe zos-jobs submit local-file ${JCL_DIR}/bind.jcl ^
+                    --host 204.90.115.200 --port 10443 ^
+                    --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
+                    --reject-unauthorized false --view-all-spool-content
+                """
+            }
+        }
+
+        stage('Run Programs') {
+            steps {
+                bat """
+                zowe zos-jobs submit local-file ${JCL_DIR}/run.jcl ^
+                    --host 204.90.115.200 --port 10443 ^
+                    --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
+                    --reject-unauthorized false --view-all-spool-content
+                """
             }
         }
     }
