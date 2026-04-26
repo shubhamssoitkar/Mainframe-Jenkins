@@ -11,8 +11,8 @@
 
        01  DEPTNO            PIC X(3).
        01  DEPTNAME.
-           49  DEPTNAME-LEN  PIC S9(4) COMP-5.
-           49  DEPTNAME-TEXT PIC X(36).
+           05  DEPTNAME-LEN  PIC S9(4) COMP-5.
+           05  DEPTNAME-TEXT PIC X(36).
        01  MGRNO             PIC X(6).
        01  ADMRDEPT          PIC X(3).
        01  LOCATION          PIC X(16).
