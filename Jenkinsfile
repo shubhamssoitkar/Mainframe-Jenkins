@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        SRC_DIR = "src/coboldb2"   // COBOL source folder
-        JCL_DIR = "src/jcl"        // JCL folder
+        SRC_DIR = "src/coboldb2"
+        JCL_DIR = "src/jcl"
         ZOSMF_PROFILE = "zosmf"
     }
 
@@ -32,6 +32,7 @@ pipeline {
         stage('Build and Run Programs') {
             steps {
                 script {
+                    def results = []
                     if (env.PROGRAMS?.trim()) {
                         def programs = env.PROGRAMS.split(',')
                         for (p in programs) {
@@ -41,7 +42,6 @@ pipeline {
                                 file: "${JCL_DIR}/compile.jcl",
                                 zosmfProfile: "${ZOSMF_PROFILE}"
                             )
-                            echo "Compile job for ${p}: ID=${compileResult.jobId}, RC=${compileResult.retCode}"
                             if (compileResult.retCode.toInteger() > 4) {
                                 error "Compile failed for ${p} with RC=${compileResult.retCode}"
                             }
@@ -50,7 +50,6 @@ pipeline {
                                 file: "${JCL_DIR}/bind.jcl",
                                 zosmfProfile: "${ZOSMF_PROFILE}"
                             )
-                            echo "Bind job for ${p}: ID=${bindResult.jobId}, RC=${bindResult.retCode}"
                             if (bindResult.retCode.toInteger() > 4) {
                                 error "Bind failed for ${p} with RC=${bindResult.retCode}"
                             }
@@ -59,14 +58,31 @@ pipeline {
                                 file: "${JCL_DIR}/run.jcl",
                                 zosmfProfile: "${ZOSMF_PROFILE}"
                             )
-                            echo "Run job for ${p}: ID=${runResult.jobId}, RC=${runResult.retCode}"
                             if (runResult.retCode.toInteger() > 4) {
                                 error "Run failed for ${p} with RC=${runResult.retCode}"
                             }
+
+                            results << [program: p,
+                                        compileId: compileResult.jobId, compileRC: compileResult.retCode,
+                                        bindId: bindResult.jobId, bindRC: bindResult.retCode,
+                                        runId: runResult.jobId, runRC: runResult.retCode]
                         }
                     } else {
                         echo "Skipping build/run — no COBOL programs discovered."
                     }
+                    // Save results for summary
+                    currentBuild.description = results.collect { r ->
+                        "${r.program}: C(${r.compileRC}) B(${r.bindRC}) R(${r.runRC})"
+                    }.join(" | ")
+                }
+            }
+        }
+
+        stage('Summary') {
+            steps {
+                script {
+                    echo "=== Job Summary ==="
+                    echo currentBuild.description
                 }
             }
         }
