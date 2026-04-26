@@ -16,12 +16,12 @@ pipeline {
         stage('Compile Program') {
             steps {
                 script {
-                    def response = zoweSubmitJob(
+                    def result = submitJobSync(
                         file: "${JCL_DIR}/compile.jcl",
                         zosmfProfile: "${ZOSMF_PROFILE}"
                     )
-                    echo "Compile job submitted: ${response.jobId}"
-                    zoweViewJobOutput(jobId: response.jobId, zosmfProfile: "${ZOSMF_PROFILE}")
+                    echo "Compile job finished with ID: ${result.jobId}"
+                    echo "Return code: ${result.retCode}"
                 }
             }
         }
@@ -29,12 +29,12 @@ pipeline {
         stage('Bind Program') {
             steps {
                 script {
-                    def response = zoweSubmitJob(
+                    def result = submitJobSync(
                         file: "${JCL_DIR}/bind.jcl",
                         zosmfProfile: "${ZOSMF_PROFILE}"
                     )
-                    echo "Bind job submitted: ${response.jobId}"
-                    zoweViewJobOutput(jobId: response.jobId, zosmfProfile: "${ZOSMF_PROFILE}")
+                    echo "Bind job finished with ID: ${result.jobId}"
+                    echo "Return code: ${result.retCode}"
                 }
             }
         }
@@ -42,20 +42,14 @@ pipeline {
         stage('Run Program') {
             steps {
                 script {
-                    def response = zoweSubmitJob(
+                    def result = submitJobSync(
                         file: "${JCL_DIR}/run.jcl",
                         zosmfProfile: "${ZOSMF_PROFILE}"
                     )
-                    echo "Run job submitted: ${response.jobId}"
-                    zoweViewJobOutput(jobId: response.jobId, zosmfProfile: "${ZOSMF_PROFILE}")
+                    echo "Run job finished with ID: ${result.jobId}"
+                    echo "Return code: ${result.retCode}"
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            archiveArtifacts artifacts: '*.jcl', fingerprint: true
         }
     }
 }
