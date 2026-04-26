@@ -27,7 +27,7 @@ pipeline {
                             echo "Submitting compile JCL for ${pgmName}"
                             bat """
                             zowe zos-jobs submit local-file ${JCL_DIR}/COMPDB2.jcl ^
-                                --vasc "DB2PGM=${pgmName}" ^
+                                --vasc "PGMNAME=${pgmName}" ^
                                 --host %HOST% --port %PORT% ^
                                 --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
                                 --reject-unauthorized false --view-all-spool-content
@@ -50,7 +50,7 @@ pipeline {
                             echo "Submitting bind JCL for ${pgmName}"
                             bat """
                             zowe zos-jobs submit local-file ${JCL_DIR}/BINDDB2.jcl ^
-                                --vasc "DB2PGM=${pgmName}" ^
+                                --vasc "PGMNAME=${pgmName}" ^
                                 --host %HOST% --port %PORT% ^
                                 --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
                                 --reject-unauthorized false --view-all-spool-content
@@ -73,7 +73,7 @@ pipeline {
                             echo "Submitting run JCL for ${pgmName}"
                             bat """
                             zowe zos-jobs submit local-file ${JCL_DIR}/RUNJCL.jcl ^
-                                --vasc "DB2PGM=${pgmName}" ^
+                                --vasc "PGMNAME=${pgmName}" ^
                                 --host %HOST% --port %PORT% ^
                                 --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
                                 --reject-unauthorized false --view-all-spool-content
