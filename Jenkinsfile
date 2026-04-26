@@ -50,8 +50,8 @@ pipeline {
                             def pgmName = file.name.replace(".cbl","")
                             echo "Submitting bind JCL for ${pgmName}"
                             bat """
-                            powershell -Command "(Get-Content ${JCL_DIR}/DB2BIND.jcl) -replace '&PGMNAME', '${pgmName}' | Set-Content ${JCL_DIR}/DB2BIND_${pgmName}.jcl"
-                            zowe zos-jobs submit local-file ${JCL_DIR}/DB2BIND_${pgmName}.jcl ^
+                            powershell -Command "(Get-Content ${JCL_DIR}/BINDDB2.jcl) -replace '&PGMNAME', '${pgmName}' | Set-Content ${JCL_DIR}/BINDDB2_${pgmName}.jcl"
+                            zowe zos-jobs submit local-file ${JCL_DIR}/BINDDB2_${pgmName}.jcl ^
                                 --host %HOST% --port %PORT% ^
                                 --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
                                 --reject-unauthorized false --view-all-spool-content
@@ -74,8 +74,8 @@ pipeline {
                             def pgmName = file.name.replace(".cbl","")
                             echo "Submitting run JCL for ${pgmName}"
                             bat """
-                            powershell -Command "(Get-Content ${JCL_DIR}/DB2RUN.jcl) -replace '&PGMNAME', '${pgmName}' | Set-Content ${JCL_DIR}/DB2RUN_${pgmName}.jcl"
-                            zowe zos-jobs submit local-file ${JCL_DIR}/DB2RUN_${pgmName}.jcl ^
+                            powershell -Command "(Get-Content ${JCL_DIR}/RUNJCL.jcl) -replace '&PGMNAME', '${pgmName}' | Set-Content ${JCL_DIR}/RUNJCL_${pgmName}.jcl"
+                            zowe zos-jobs submit local-file ${JCL_DIR}/RUNJCL_${pgmName}.jcl ^
                                 --host %HOST% --port %PORT% ^
                                 --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
                                 --reject-unauthorized false --view-all-spool-content
