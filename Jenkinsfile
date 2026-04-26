@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        SRC_DIR = "src/coboldb2"
-        JCL_DIR = "src/jcl"
-        ZOSMF_PROFILE = "zosmf"
+        SRC_DIR = "src/coboldb2"   // COBOL source folder
+        JCL_DIR = "src/jcl"        // JCL folder
+        ZOSMF_PROFILE = "zosmf"    // Your Zowe profile name
     }
 
     stages {
@@ -42,6 +42,7 @@ pipeline {
                                 file: "${JCL_DIR}/compile.jcl",
                                 zosmfProfile: "${ZOSMF_PROFILE}"
                             )
+                            echo "Compile job for ${p}: ID=${compileResult.jobId}, RC=${compileResult.retCode}"
                             if (compileResult.retCode.toInteger() > 4) {
                                 error "Compile failed for ${p} with RC=${compileResult.retCode}"
                             }
@@ -50,6 +51,7 @@ pipeline {
                                 file: "${JCL_DIR}/bind.jcl",
                                 zosmfProfile: "${ZOSMF_PROFILE}"
                             )
+                            echo "Bind job for ${p}: ID=${bindResult.jobId}, RC=${bindResult.retCode}"
                             if (bindResult.retCode.toInteger() > 4) {
                                 error "Bind failed for ${p} with RC=${bindResult.retCode}"
                             }
@@ -58,6 +60,7 @@ pipeline {
                                 file: "${JCL_DIR}/run.jcl",
                                 zosmfProfile: "${ZOSMF_PROFILE}"
                             )
+                            echo "Run job for ${p}: ID=${runResult.jobId}, RC=${runResult.retCode}"
                             if (runResult.retCode.toInteger() > 4) {
                                 error "Run failed for ${p} with RC=${runResult.retCode}"
                             }
