@@ -7,22 +7,24 @@
 
        EXEC SQL INCLUDE SQLCA END-EXEC.
 
-       01 WS-ACC-ID     PIC 9(4).
-       01 WS-CUST-ID    PIC X(5).
-       01 WS-BALANCE    PIC 9(10).9(02).
+       EXEC SQL BEGIN DECLARE SECTION END-EXEC.
+       01 WS-ACC-ID     PIC S9(9) COMP-5.
+       01 WS-CUST-ID    PIC X(10).
+       01 WS-BALANCE    PIC S9(9)V99 COMP-3.
        01 WS-STATUS     PIC X(10).
        01 WS-ACC-TYPE   PIC X(10).
-       01 WS-OPEN-DATE  PIC X(04).
+       01 WS-OPEN-DATE  PIC X(10).
+       EXEC SQL END DECLARE SECTION END-EXEC.
 
-       * Report counters
+      * Report counters
        01 WS-TOTAL-ACCTS   PIC 9(4) VALUE 0.
-       01 WS-TOTAL-BALANCE PIC S9(9)V99 COMP-3 VALUE 0.
+       01 WS-TOTAL-BALANCE PIC S9(11)V99 COMP-3 VALUE 0.
 
-       EXEC SQL
+           EXEC SQL
            DECLARE C1 CURSOR FOR
            SELECT ACC_ID, CUST_ID, BALANCE, STATUS, ACC_TYPE, OPEN_DATE
            FROM Z10791.ACCOUNT
-       END-EXEC.
+           END-EXEC.
 
        PROCEDURE DIVISION.
        MAIN-PARA.
@@ -78,9 +80,10 @@
                CLOSE C1
            END-EXEC.
            DISPLAY "Cursor closed."
+           .
 
        SUMMARY-PARA.
            DISPLAY "===================================="
            DISPLAY "TOTAL ACCOUNTS : " WS-TOTAL-ACCTS
            DISPLAY "TOTAL BALANCE  : " WS-TOTAL-BALANCE
-           DISPLAY "===================================="
+           DISPLAY "====================================".
