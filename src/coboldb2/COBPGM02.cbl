@@ -59,11 +59,17 @@
                       :WS-OPEN-DATE
               END-EXEC
 
-              IF SQLCODE = 0
-                 PERFORM DISPLAY-RECORD-PARA
-                 ADD 1 TO WS-TOTAL-ACCTS
-                 ADD WS-BALANCE TO WS-TOTAL-BALANCE
-              END-IF
+              EVALUATE SQLCODE
+                 WHEN 0
+                    PERFORM DISPLAY-RECORD-PARA
+                    ADD 1 TO WS-TOTAL-ACCTS
+                    ADD WS-BALANCE TO WS-TOTAL-BALANCE
+                 WHEN 100
+                    DISPLAY "End of result set."
+                 WHEN OTHER
+                    DISPLAY "Error fetching row, SQLCODE=" SQLCODE
+                    EXIT PERFORM
+              END-EVALUATE
            END-PERFORM.
 
        DISPLAY-RECORD-PARA.
