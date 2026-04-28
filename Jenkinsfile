@@ -25,25 +25,24 @@ pipeline {
                         cobolFiles.each { file ->
                             def pgmName = file.name.replace(".cbl","").toUpperCase()
                             echo "Deleting old members for ${pgmName}"
-                            // Delete from LOAD library
                             bat """
-                            zowe files delete data-set-member "Z10791.LOAD(${pgmName})" ^
+                            zowe files delete data-set "Z10791.LOAD" --member ${pgmName} --for-sure ^
                                 --host %HOST% --port %PORT% ^
                                 --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
-                                --reject-unauthorized false --for-sure
+                                --reject-unauthorized false
                             """
-                            // Delete from DBRMLIB
                             bat """
-                            zowe files delete data-set-member "Z10791.DBRMLIB(${pgmName})" ^
+                            zowe files delete data-set "Z10791.DBRMLIB" --member ${pgmName} --for-sure ^
                                 --host %HOST% --port %PORT% ^
                                 --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
-                                --reject-unauthorized false --for-sure
+                                --reject-unauthorized false
                             """
                         }
                     }
                 }
             }
         }
+
 
 
         stage('Upload COBOL Sources') {
