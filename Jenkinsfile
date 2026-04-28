@@ -15,6 +15,28 @@ pipeline {
             }
         }
 
+        stage('Upload COBOL Sources') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'zosmf-credentials',
+                                                  usernameVariable: 'ZOSMF_USER',
+                                                  passwordVariable: 'ZOSMF_PASS')]) {
+                    script {
+                        def cobolFiles = findFiles(glob: "${COBOL_DIR}/*.cbl")
+                        cobolFiles.each { file ->
+                            def pgmName = file.name.replace(".cbl","").toUpperCase()
+                            echo "Uploading ${file.name} to Z10791.CBL(${pgmName})"
+                            bat """
+                            zowe files upload file-to-data-set ${file.path} "Z10791.CBL(${pgmName})" ^
+                                --host %HOST% --port %PORT% ^
+                                --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
+                                --reject-unauthorized false
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Compile Programs') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'zosmf-credentials',
