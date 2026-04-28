@@ -15,6 +15,37 @@ pipeline {
             }
         }
 
+        stage('Cleanup Old Members') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'zosmf-credentials',
+                                                  usernameVariable: 'ZOSMF_USER',
+                                                  passwordVariable: 'ZOSMF_PASS')]) {
+                    script {
+                        def cobolFiles = findFiles(glob: "src/coboldb2/*.cbl")
+                        cobolFiles.each { file ->
+                            def pgmName = file.name.replace(".cbl","").toUpperCase()
+                            echo "Deleting old members for ${pgmName}"
+                            // Delete from LOAD library
+                            bat """
+                            zowe files delete data-set-member "Z10791.LOAD(${pgmName})" ^
+                                --host %HOST% --port %PORT% ^
+                                --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
+                                --reject-unauthorized false --for-sure
+                            """
+                            // Delete from DBRMLIB
+                            bat """
+                            zowe files delete data-set-member "Z10791.DBRMLIB(${pgmName})" ^
+                                --host %HOST% --port %PORT% ^
+                                --user %ZOSMF_USER% --password %ZOSMF_PASS% ^
+                                --reject-unauthorized false --for-sure
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+
         stage('Upload COBOL Sources') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'zosmf-credentials',
