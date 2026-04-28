@@ -5,46 +5,41 @@
        DATA DIVISION.
        WORKING-STORAGE SECTION.
 
-           EXEC SQL INCLUDE SQLCA END-EXEC.
+       EXEC SQL INCLUDE SQLCA END-EXEC.
 
-           EXEC SQL BEGIN DECLARE SECTION END-EXEC.
+       EXEC SQL BEGIN DECLARE SECTION END-EXEC.
+       01 WS-ACC-ID     PIC S9(9) COMP-5.
+       01 WS-CUST-ID    PIC X(10).
+       01 WS-BALANCE    PIC S9(9)V99 COMP-3.
+       01 WS-STATUS     PIC X(10).
+       01 WS-ACC-TYPE   PIC X(10).
+       01 WS-OPEN-DATE  PIC X(10).
+       EXEC SQL END DECLARE SECTION END-EXEC.
 
-       01  DEPTNO            PIC X(3).
-       01  DEPTNAME.
-           05  DEPTNAME-LEN  PIC S9(4) COMP-5.
-           05  DEPTNAME-TEXT PIC X(36).
-       01  MGRNO             PIC X(6).
-       01  ADMRDEPT          PIC X(3).
-       01  LOCATION          PIC X(16).
-
-           EXEC SQL END DECLARE SECTION END-EXEC.
-
-       01  WS-TOTAL-DEPTS    PIC 9(4) VALUE 0.
+      * Report counters
+       01 WS-TOTAL-ACCTS   PIC 9(4) VALUE 0.
+       01 WS-TOTAL-BALANCE PIC S9(11)V99 COMP-3 VALUE 0.
 
            EXEC SQL
-               DECLARE C1 CURSOR FOR
-               SELECT DEPTNO,
-                      DEPTNAME,
-                      MGRNO,
-                      ADMRDEPT,
-                      LOCATION
-               FROM IBMUSER.DEPT
+           DECLARE C1 CURSOR FOR
+           SELECT ACC_ID, CUST_ID, BALANCE, STATUS, ACC_TYPE, OPEN_DATE
+           FROM Z10791.ACCOUNT
            END-EXEC.
 
        PROCEDURE DIVISION.
        MAIN-PARA.
-           DISPLAY "=== STARTING DB2 DEPT REPORT ==="
+           DISPLAY "=== STARTING DB2 ACCOUNT REPORT ==="
            PERFORM OPEN-CURSOR-PARA
            PERFORM FETCH-LOOP-PARA
            PERFORM CLOSE-CURSOR-PARA
            PERFORM SUMMARY-PARA
-           DISPLAY "=== END OF DB2 DEPT REPORT ==="
+           DISPLAY "=== END OF DB2 ACCOUNT REPORT ==="
            STOP RUN.
 
        OPEN-CURSOR-PARA.
            EXEC SQL
                OPEN C1
-           END-EXEC
+           END-EXEC.
            IF SQLCODE = 0
               DISPLAY "Cursor opened successfully."
            ELSE
@@ -56,34 +51,39 @@
            PERFORM UNTIL SQLCODE NOT = 0
               EXEC SQL
                   FETCH C1 INTO
-                      :DEPTNO,
-                      :DEPTNAME,
-                      :MGRNO,
-                      :ADMRDEPT,
-                      :LOCATION
+                      :WS-ACC-ID,
+                      :WS-CUST-ID,
+                      :WS-BALANCE,
+                      :WS-STATUS,
+                      :WS-ACC-TYPE,
+                      :WS-OPEN-DATE
               END-EXEC
+
               IF SQLCODE = 0
                  PERFORM DISPLAY-RECORD-PARA
-                 ADD 1 TO WS-TOTAL-DEPTS
+                 ADD 1 TO WS-TOTAL-ACCTS
+                 ADD WS-BALANCE TO WS-TOTAL-BALANCE
               END-IF
            END-PERFORM.
 
        DISPLAY-RECORD-PARA.
            DISPLAY "------------------------------------"
-           DISPLAY "DEPTNO     : " DEPTNO
-           DISPLAY "DEPTNAME   : "
-                   DEPTNAME-TEXT (1:DEPTNAME-LEN)
-           DISPLAY "MGRNO      : " MGRNO
-           DISPLAY "ADMRDEPT   : " ADMRDEPT
-           DISPLAY "LOCATION   : " LOCATION.
+           DISPLAY "Account ID   : " WS-ACC-ID
+           DISPLAY "Customer ID  : " WS-CUST-ID
+           DISPLAY "Balance      : " WS-BALANCE
+           DISPLAY "Status       : " WS-STATUS
+           DISPLAY "Account Type : " WS-ACC-TYPE
+           DISPLAY "Open Date    : " WS-OPEN-DATE.
 
        CLOSE-CURSOR-PARA.
            EXEC SQL
                CLOSE C1
-           END-EXEC
-           DISPLAY "Cursor closed.".
+           END-EXEC.
+           DISPLAY "Cursor closed."
+           .
 
        SUMMARY-PARA.
            DISPLAY "===================================="
-           DISPLAY "TOTAL DEPARTMENTS : " WS-TOTAL-DEPTS
+           DISPLAY "TOTAL ACCOUNTS : " WS-TOTAL-ACCTS
+           DISPLAY "TOTAL BALANCE  : " WS-TOTAL-BALANCE
            DISPLAY "====================================".
